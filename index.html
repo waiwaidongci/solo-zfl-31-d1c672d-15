@@ -1,134 +1,976 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>手工织锦纹样排版台</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, "PingFang SC", sans-serif; background: #f3efe7; color: #282018; }
-    header { padding: 18px 24px; background: #fffaf2; border-bottom: 1px solid #d9cdbc; display: flex; justify-content: space-between; gap: 16px; align-items: center; }
-    h1 { margin: 0; font-size: 26px; }
-    button { border: 0; border-radius: 8px; padding: 10px 13px; background: #8d3e37; color: #fff; font-weight: 800; cursor: pointer; }
-    button.secondary { background: #71675c; }
-    input, select { width: 100%; border: 1px solid #d9cdbc; border-radius: 6px; padding: 9px; font: inherit; background: #fff; }
-    label { display: block; margin: 9px 0 5px; color: #76695e; font-size: 13px; }
-    .app { display: grid; grid-template-columns: 280px 1fr 320px; gap: 16px; padding: 16px; }
-    .panel { background: #fffaf2; border: 1px solid #d9cdbc; border-radius: 8px; padding: 14px; }
-    .grid { display: grid; gap: 2px; margin: 0 auto; width: min(100%, 720px); border: 6px solid #72533c; background: #72533c; }
-    .cell { aspect-ratio: 1; background: #f8ead2; cursor: pointer; border-radius: 2px; }
-    .palette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .swatch { aspect-ratio: 1; border-radius: 8px; border: 3px solid transparent; cursor: pointer; }
-    .swatch.active { border-color: #1f1b16; }
-    .blocks { display: grid; gap: 8px; }
-    .stats { display: grid; gap: 8px; }
-    .stat { display: flex; justify-content: space-between; border-bottom: 1px solid #e1d5c5; padding: 6px 0; }
-    .preview { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; border: 1px solid #d9cdbc; padding: 6px; margin-top: 8px; }
-    .mini { aspect-ratio: 1; border-radius: 2px; }
-    .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .warning { color: #a03a2e; font-weight: 800; }
-    @media (max-width: 1000px) { header { display: block; } .app { grid-template-columns: 1fr; } }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>织锦工坊 · 安全巡检与隐患整改台</title>
+<style>
+  :root{
+    --ink:#2c211a; --muted:#7d6f61; --paper:#f6f0e6; --card:#fffdf8; --line:#ddd0bd;
+    --brocade:#8d3e3d; --brocade-dk:#6e2b2b; --gold:#c4963f; --teal:#2f6b63;
+    --l1:#2f6b63; --l2:#c47d2e; --l3:#b3352c;
+    --ok:#2f7d4f; --warn-bg:#fbece8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif;background:var(--paper);color:var(--ink);font-size:14px}
+  header.top{background:linear-gradient(120deg,#7a2e2e,#8d3e3d 55%,#a65a3a);color:#fdf6ea;
+    padding:14px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;border-bottom:4px solid var(--gold)}
+  header.top h1{margin:0;font-size:21px;letter-spacing:1px}
+  header.top .sub{font-size:12px;opacity:.85;margin-top:2px}
+  .spacer{flex:1}
+  .role-seg{display:flex;background:rgba(0,0,0,.22);border-radius:10px;padding:3px;gap:2px}
+  .role-seg button{border:0;background:transparent;color:#f7ead6;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px}
+  .role-seg button.active{background:#fdf6ea;color:var(--brocade-dk)}
+  .role-extra{display:flex;align-items:center;gap:8px}
+  .role-extra input,.role-extra select{background:#fdf6ea;border:1px solid #caa98a;border-radius:8px;padding:7px 9px;font:inherit;color:var(--ink);min-width:130px}
+  .icon-btn{border:1px solid rgba(253,246,234,.55);background:rgba(255,255,255,.08);color:#fdf6ea;border-radius:8px;padding:7px 11px;cursor:pointer;font-weight:700}
+
+  .kpis{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px;padding:14px 18px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .kpi .n{font-size:22px;font-weight:800}
+  .kpi .l{color:var(--muted);font-size:12px;margin-top:2px}
+  .kpi.danger .n{color:var(--l3)}
+  .kpi.warn .n{color:var(--l2)}
+
+  .restrict-banner{margin:14px 18px 0;background:var(--warn-bg);border:1px solid #e2b3ab;border-left:6px solid var(--l3);
+    border-radius:10px;padding:11px 14px;color:#7a241d;font-weight:700;display:none}
+  .restrict-banner b{color:var(--l3)}
+  .restrict-banner a{color:var(--brocade-dk);text-decoration:underline;cursor:pointer;margin-left:6px}
+
+  main{padding:14px 18px 40px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .tabs button{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:20px;padding:8px 16px;cursor:pointer;font-weight:700}
+  .tabs button.active{background:var(--brocade);border-color:var(--brocade);color:#fff}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .panel h2{margin:0 0 4px;font-size:16px}
+  .panel .hint{color:var(--muted);font-size:12px;margin:0 0 12px}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .toolbar input,.toolbar select{border:1px solid var(--line);border-radius:8px;padding:8px 9px;font:inherit;background:#fff}
+  .toolbar input[type=text]{min-width:180px}
+
+  button.btn{border:0;border-radius:8px;padding:8px 14px;background:var(--brocade);color:#fff;font-weight:700;cursor:pointer}
+  button.btn:hover{background:var(--brocade-dk)}
+  button.btn.teal{background:var(--teal)}
+  button.btn.ghost{background:#fff;color:var(--brocade-dk);border:1px solid var(--line)}
+  button.btn.gray{background:#7d6f61}
+  button.btn.sm{padding:5px 10px;font-size:12px}
+  button:disabled{opacity:.45;cursor:not-allowed}
+
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid #ece2d3;font-size:13px;vertical-align:top}
+  th{color:var(--muted);font-size:12px;background:#faf4e9;position:sticky;top:0}
+  tr:hover td{background:#fbf6ee}
+  .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
+  .l1{background:#e3f0ee;color:var(--l1)}
+  .l2{background:#f8ecd9;color:var(--l2)}
+  .l3{background:#f8e2df;color:var(--l3)}
+  .st-open{background:#fdeed8;color:#a8671f}
+  .st-done{background:#e5f1e9;color:var(--ok)}
+  .st-rejected{background:#f8e2df;color:var(--l3)}
+  .st-closed{background:#e7e9ee;color:#4b5563}
+  .st-overdue{background:#f3d2ce;color:#7a241d}
+  .pill-off{background:#ece2d3;color:var(--muted)}
+  .pill-on{background:#e3f0ee;color:var(--teal)}
+  .due{font-variant-numeric:tabular-nums}
+  .due.over{color:var(--l3);font-weight:800}
+  .due.soon{color:var(--l2);font-weight:700}
+  .muted{color:var(--muted)}
+  .danger{color:var(--l3);font-weight:700}
+  .lock-note{font-size:12px;color:var(--l3);margin-top:6px}
+  .empty{padding:30px;text-align:center;color:var(--muted)}
+  .orderlink{color:var(--brocade-dk);cursor:pointer;text-decoration:underline;font-weight:700}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .area-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff}
+  .area-card.restricted{border-color:#e2b3ab;background:var(--warn-bg)}
+  .area-card h3{margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .item-row{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid #ece2d3;border-radius:8px;margin-top:8px;background:#fdfaf4}
+  .item-row.off{opacity:.55}
+  .item-row .txt{flex:1}
+  .item-row .txt small{color:var(--muted)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .sla-row{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .sla-row .tag{min-width:78px;text-align:center}
+  .sla-row input{width:90px;border:1px solid var(--line);border-radius:8px;padding:7px;font:inherit}
+  .timeline{border-left:3px solid #e3d5c1;margin:8px 0 0 6px;padding-left:14px}
+  .timeline .ev{margin-bottom:12px}
+  .timeline .ev .t{font-size:12px;color:var(--muted)}
+  .timeline .ev b{font-size:13px}
+  .rect-box{background:#faf4e9;border:1px solid #ece2d3;border-radius:8px;padding:10px;margin:8px 0;white-space:pre-wrap}
+  .review-box{background:#f3f7f6;border:1px solid #d8e6e3;border-radius:8px;padding:10px;margin:8px 0;white-space:pre-wrap}
+  .modal-mask{position:fixed;inset:0;background:rgba(44,33,26,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal{background:var(--card);border-radius:14px;width:min(680px,100%);max-height:88vh;overflow:auto;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+  .modal h3{margin:0 0 12px;font-size:17px}
+  .modal label{display:block;margin:11px 0 5px;color:var(--muted);font-size:12px;font-weight:700}
+  .modal input[type=text],.modal input[type=number],.modal input[type=datetime-local],.modal select,.modal textarea{
+    width:100%;border:1px solid var(--line);border-radius:8px;padding:9px;font:inherit;background:#fff}
+  .modal textarea{min-height:84px;resize:vertical}
+  .modal .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+  .modal .inline{display:flex;gap:10px}
+  .modal .inline>div{flex:1}
+  .kv{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;font-size:13px}
+  .kv div:nth-child(odd){color:var(--muted)}
+  .toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);background:#33271f;color:#fdf6ea;padding:10px 18px;border-radius:24px;
+    font-weight:700;opacity:0;transition:opacity .25s;z-index:99;pointer-events:none;max-width:80vw;text-align:center}
+  .toast.show{opacity:.96}
+  .legend{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.9}
+  .legend .tag{margin-right:6px}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:8px 0 26px}
+  @media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
 </head>
 <body>
-  <header>
-    <div><h1>手工织锦纹样排版台</h1><div>绘制经纬网格纹样，统计色线用量并保存方案。</div></div>
-    <div class="toolbar"><button id="saveBtn">保存方案</button><button id="exportBtn" class="secondary">导出JSON</button></div>
-  </header>
-  <main class="app">
-    <aside class="panel">
-      <h2>画布</h2>
-      <label>经向列数</label><input id="cols" type="number" value="18" min="6" max="36">
-      <label>纬向行数</label><input id="rows" type="number" value="14" min="6" max="32">
-      <button id="newBtn">新建网格</button>
-      <h2>色线库</h2>
-      <div class="palette" id="palette"></div>
-      <h2>基础纹样块</h2>
-      <div class="blocks">
-        <button data-block="dot" class="secondary">单点</button>
-        <button data-block="cross" class="secondary">十字</button>
-        <button data-block="diamond" class="secondary">小菱形</button>
-      </div>
-    </aside>
-    <section class="panel"><div class="grid" id="grid"></div></section>
-    <aside class="panel">
-      <h2>操作</h2>
-      <div class="toolbar"><button id="undoBtn" class="secondary">撤销</button><button id="redoBtn" class="secondary">重做</button></div>
-      <p>点击填色，按住拖动可连续填色。</p>
-      <h2>用色统计</h2>
-      <div class="stats" id="stats"></div>
-      <h2>重复单元预览</h2>
-      <div class="preview" id="preview"></div>
-      <h2>断线风险</h2>
-      <div id="risk"></div>
-    </aside>
-  </main>
-  <script>
-    const colors = ["#f7e7c4","#a6322d","#1f5f78","#d6a437","#355b38","#713d7b","#1e1b18","#e98c52"];
-    const grid = document.querySelector("#grid");
-    const palette = document.querySelector("#palette");
-    const stats = document.querySelector("#stats");
-    const preview = document.querySelector("#preview");
-    const risk = document.querySelector("#risk");
-    let cols = 18, rows = 14, active = 1, block = "dot", dragging = false;
-    let cells = [];
-    let undo = [], redo = [];
-    function init(loadSaved = true) {
-      const saved = loadSaved && JSON.parse(localStorage.getItem("zfl31Pattern") || "null");
-      if (saved) { cols = saved.cols; rows = saved.rows; cells = saved.cells; }
-      else { cols = Number(document.querySelector("#cols").value); rows = Number(document.querySelector("#rows").value); cells = Array(cols * rows).fill(0); }
-      document.querySelector("#cols").value = cols; document.querySelector("#rows").value = rows;
-      render();
-    }
-    function render() {
-      palette.innerHTML = colors.map((c, i) => '<button class="swatch '+(i===active?'active':'')+'" data-color="'+i+'" style="background:'+c+'"></button>').join("");
-      palette.querySelectorAll("[data-color]").forEach(el => el.onclick = () => { active = Number(el.dataset.color); render(); });
-      grid.style.gridTemplateColumns = "repeat("+cols+", 1fr)";
-      grid.innerHTML = cells.map((v, i) => '<div class="cell" data-i="'+i+'" style="background:'+colors[v]+'"></div>').join("");
-      grid.querySelectorAll(".cell").forEach(el => {
-        el.onpointerdown = () => { dragging = true; paint(Number(el.dataset.i)); };
-        el.onpointerenter = () => { if (dragging) paint(Number(el.dataset.i)); };
-      });
-      window.onpointerup = () => dragging = false;
-      renderStats();
-    }
-    function snapshot() { undo.push([...cells]); redo = []; if (undo.length > 50) undo.shift(); }
-    function paint(i) {
-      snapshot();
-      const targets = pattern(i);
-      targets.forEach(t => { if (t >= 0 && t < cells.length) cells[t] = active; });
-      render();
-    }
-    function pattern(i) {
-      const x = i % cols, y = Math.floor(i / cols);
-      if (block === "cross") return [i, idx(x-1,y), idx(x+1,y), idx(x,y-1), idx(x,y+1)].filter(v => v !== null);
-      if (block === "diamond") return [idx(x,y-1), idx(x-1,y), i, idx(x+1,y), idx(x,y+1)].filter(v => v !== null);
-      return [i];
-    }
-    function idx(x,y) { return x < 0 || x >= cols || y < 0 || y >= rows ? null : y * cols + x; }
-    function renderStats() {
-      const counts = colors.map((_, i) => cells.filter(v => v === i).length);
-      stats.innerHTML = counts.map((n, i) => '<div class="stat"><span><span style="display:inline-block;width:14px;height:14px;background:'+colors[i]+'"></span> 色线'+i+'</span><b>'+n+'</b></div>').join("");
-      preview.innerHTML = Array.from({length: 36}, (_, i) => '<div class="mini" style="background:'+colors[cells[(i % 6) + Math.floor(i / 6) * cols] || colors[0]]+'"></div>').join("");
-      const riskRows = [];
-      for (let y = 0; y < rows; y++) {
-        let switches = 0;
-        for (let x = 1; x < cols; x++) if (cells[y*cols+x] !== cells[y*cols+x-1]) switches++;
-        if (switches > cols * .62) riskRows.push(y + 1);
-      }
-      risk.innerHTML = riskRows.length ? '<p class="warning">第'+riskRows.join("、")+'行换色过密，可能断线。</p>' : '<p>暂无明显断线风险。</p>';
-    }
-    document.querySelectorAll("[data-block]").forEach(btn => btn.onclick = () => block = btn.dataset.block);
-    document.querySelector("#newBtn").onclick = () => { undo = []; redo = []; init(false); };
-    document.querySelector("#undoBtn").onclick = () => { if (!undo.length) return; redo.push([...cells]); cells = undo.pop(); render(); };
-    document.querySelector("#redoBtn").onclick = () => { if (!redo.length) return; undo.push([...cells]); cells = redo.pop(); render(); };
-    document.querySelector("#saveBtn").onclick = () => localStorage.setItem("zfl31Pattern", JSON.stringify({ cols, rows, cells }));
-    document.querySelector("#exportBtn").onclick = () => {
-      const data = { cols, rows, cells, usage: colors.map((color, i) => ({ color, count: cells.filter(v => v === i).length })) };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "brocade-pattern.json"; a.click(); URL.revokeObjectURL(a.href);
+<header class="top">
+  <div>
+    <h1>🪡 织锦工坊 · 安全巡检与隐患整改台</h1>
+    <div class="sub">区域巡检 · 分级整改 · 逾期升级 · 复核闭环</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="role-extra" id="roleExtra"></div>
+  <div class="role-seg" id="roleSeg">
+    <button data-role="admin">管理员</button>
+    <button data-role="inspector">巡检员</button>
+    <button data-role="person">责任人</button>
+  </div>
+  <button class="icon-btn" id="helpBtn">流程说明</button>
+</header>
+
+<section class="kpis" id="kpis"></section>
+<div class="restrict-banner" id="restrictBanner"></div>
+
+<main>
+  <div class="tabs" id="tabs"></div>
+  <div id="view"></div>
+</main>
+
+<footer>数据保存在本机浏览器（localStorage），刷新后全部记录保留 · 整改单状态实时刷新，逾期自动升级</footer>
+
+<div class="modal-mask" id="modalMask"><div class="modal" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ================= 常量 ================= */
+const STORE_KEY = "brocade_safety_v1";
+const LEVELS = [
+  { key:1, name:"一般隐患", cls:"l1" },
+  { key:2, name:"较重隐患", cls:"l2" },
+  { key:3, name:"严重隐患", cls:"l3" }
+];
+const STATUS = {
+  open:     { name:"待整改", cls:"st-open" },
+  rejected: { name:"退回重做", cls:"st-rejected" },
+  done:     { name:"待复核", cls:"st-done" },
+  closed:   { name:"已闭环", cls:"st-closed" }
+};
+const SWEEP_MS = 15000;
+
+/* ================= 数据层 ================= */
+var db = null;
+function seed(){
+  const now = Date.now();
+  return {
+    seq: 1,
+    areas: [
+      { id:"a1", name:"染色车间", desc:"天然染料调配与煮染作业区" },
+      { id:"a2", name:"织造车间", desc:"手工织机集中作业区" },
+      { id:"a3", name:"成品库房", desc:"织锦成品与包装物料存放区" },
+      { id:"a4", name:"染料仓", desc:"染料、助剂等危化品存放区" }
+    ],
+    persons: [
+      { id:"p1", name:"周巧娘", role:"车间主任", phone:"内线 801" },
+      { id:"p2", name:"石大壮", role:"设备维修", phone:"内线 802" },
+      { id:"p3", name:"苗青",   role:"库房主管", phone:"内线 803" },
+      { id:"p4", name:"龙安全", role:"安全员",   phone:"内线 804" }
+    ],
+    items: [
+      { id:"i1", areaId:"a1", code:"RS-01", text:"煮染锅周边防烫护栏完好", active:true },
+      { id:"i2", areaId:"a1", code:"RS-02", text:"染料废液按规定收集处理", active:true },
+      { id:"i3", areaId:"a1", code:"RS-03", text:"排风扇运转正常、通风良好", active:true },
+      { id:"i4", areaId:"a2", code:"ZZ-01", text:"织机传动部位防护罩齐全", active:true },
+      { id:"i5", areaId:"a2", code:"ZZ-02", text:"电气线路无私拉乱接、无老化破损", active:true },
+      { id:"i6", areaId:"a2", code:"ZZ-03", text:"消防通道畅通、灭火器在有效期内", active:true },
+      { id:"i7", areaId:"a2", code:"ZZ-04", text:"棉纱飞絮及时清扫，无积尘", active:true },
+      { id:"i8", areaId:"a3", code:"KF-01", text:"库房照明灯具与货物保持安全距离", active:true },
+      { id:"i9", areaId:"a3", code:"KF-02", text:"货物堆放稳固、限高线清晰", active:true },
+      { id:"i10",areaId:"a4", code:"RC-01", text:"危化品分区分类存放、标识清楚", active:true },
+      { id:"i11",areaId:"a4", code:"RC-02", text:"应急洗眼器可用、防泄漏沙箱齐备", active:true },
+      { id:"i12",areaId:"a4", code:"RC-03", text:"出入库双人登记落锁", active:false }
+    ],
+    orders: [],
+    inspections: [],
+    config: { slaHours: { 1:24, 2:8, 3:2 } }, // 一般24h / 较重8h / 严重2h
+    ui: { role:"inspector", tab:{ admin:"master", inspector:"inspect", person:"todo" },
+          inspectorName:"巡检验收员", personId:"p1" }
+  };
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw){ db = seed(); save(); return; }
+    db = JSON.parse(raw);
+    // 兼容补字段
+    if(!db.config) db.config = { slaHours:{1:24,2:8,3:2} };
+    if(!db.ui) db.ui = { role:"inspector", tab:{admin:"master",inspector:"inspect",person:"todo"}, inspectorName:"巡检验收员", personId:(db.persons[0]||{}).id||"" };
+    if(!db.ui.tab) db.ui.tab = { admin:"master", inspector:"inspect", person:"todo" };
+  }catch(e){ db = seed(); save(); }
+}
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(db)); }
+function uid(prefix){ return prefix + Date.now().toString(36) + Math.floor(Math.random()*1e4).toString(36); }
+function nextCode(){
+  const d = new Date();
+  const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0");
+  return "ZG" + ymd + "-" + String(db.seq++).padStart(3,"0");
+}
+
+/* ================= 查询辅助 ================= */
+const areaName = id => { const a=db.areas.find(x=>x.id===id); return a?a.name:"（已删除区域）"; };
+const personName = id => { const p=db.persons.find(x=>x.id===id); return p?p.name:"（待指派）"; };
+const itemRef = id => db.items.find(x=>x.id===id);
+const lvl = k => LEVELS.find(l=>l.key===k) || LEVELS[0];
+function itemLabel(it){ if(!it) return "（已删除检查项）"; return (it.code?it.code+" ":"") + it.text; }
+function openOrdersByItem(itemId){ return db.orders.filter(o=>o.itemId===itemId && o.status!=="closed"); }
+function openHighOrdersOfArea(areaId){ return db.orders.filter(o=>o.areaId===areaId && o.level===3 && o.status!=="closed"); }
+function restrictedAreas(){
+  const set = new Set();
+  db.orders.forEach(o=>{ if(o.level===3 && o.status!=="closed") set.add(o.areaId); });
+  return set;
+}
+function slaMs(level){ return Number(db.config.slaHours[level]||0) * 3600000; }
+function isOverdue(o){ return (o.status==="open"||o.status==="rejected") && Date.now() > o.deadline; }
+
+/* ================= 业务动作 ================= */
+// 巡检记录：合格或问题；问题自动开单
+function recordInspection({ itemId, ok, level, assignee, note, inspectorName }){
+  const it = itemRef(itemId);
+  if(!it) throw new Error("检查项不存在");
+  if(!ok){
+    if(openOrdersByItem(itemId).length) throw new Error("该检查项已有未闭环整改单，不能重复开单");
+    if(openHighOrdersOfArea(it.areaId).length) throw new Error("该区域因严重隐患已被限制，请先完成严重隐患整改复核");
+    if(!assignee) throw new Error("请选择整改责任人");
+    const now = Date.now();
+    const order = {
+      id: uid("o"), code:nextCode(), itemId, areaId:it.areaId,
+      level, assignee,
+      status:"open", createAt:now, deadline: now + slaMs(level),
+      openedBy: inspectorName || "巡检员",
+      problemNote: (note||"").trim(),
+      rectifyNote:"", rectifyAt:null, rectifyTimes:0,
+      reviewNote:"", reviewAt:null, reviewer:"",
+      history:[{ at:now, type:"create", by:inspectorName||"巡检员",
+        text:"按 "+lvl(level).name+" 开单，限期 "+fmtDateTime(now+slaMs(level))+(note?"；问题描述："+note:"") }]
     };
-    init();
-  </script>
+    db.orders.unshift(order);
+    db.inspections.unshift({ id:uid("r"), itemId, areaId:it.areaId, at:now, ok:false, level,
+      note:(note||"").trim(), by:inspectorName||"巡检员", orderId:order.id });
+    save();
+    return order;
+  }else{
+    db.inspections.unshift({ id:uid("r"), itemId, areaId:it.areaId, at:Date.now(), ok:true, level:null,
+      note:(note||"").trim(), by:inspectorName||"巡检员", orderId:null });
+    save();
+    return null;
+  }
+}
+
+// 逾期自动升级（每次每单只升一级，避免一次跳满）
+function sweepOverdue(){
+  const now = Date.now(); let changed = false;
+  db.orders.forEach(o=>{
+    if((o.status==="open"||o.status==="rejected") && now > o.deadline && o.level < 3){
+      o.level++;
+      o.deadline = now + slaMs(o.level);
+      o.history.push({ at:now, type:"escalate", by:"系统",
+        text:"逾期未闭环，自动升级为「"+lvl(o.level).name+"」，期限重算至 "+fmtDateTime(o.deadline) });
+      changed = true;
+    }
+  });
+  if(changed) save();
+  return changed;
+}
+
+// 责任人提交整改
+function submitRectify(orderId, note, by){
+  const o = db.orders.find(x=>x.id===orderId);
+  if(!o) throw new Error("整改单不存在");
+  if(o.status==="closed") throw new Error("该单已闭环");
+  if(o.status==="done") throw new Error("已提交，等待复核");
+  if(!note.trim()) throw new Error("请填写整改说明");
+  const now = Date.now();
+  o.rectifyNote = note.trim(); o.rectifyAt = now; o.rectifyTimes++;
+  o.status = "done";
+  o.history.push({ at:now, type:"submit", by, text:"提交整改说明，等待复核" });
+  save();
+}
+
+// 复核：通过闭环 / 不通过退回并重新起算期限
+function reviewOrder(orderId, pass, note, reviewer){
+  const o = db.orders.find(x=>x.id===orderId);
+  if(!o) throw new Error("整改单不存在");
+  if(o.status!=="done") throw new Error("当前状态不可复核");
+  const now = Date.now();
+  if(pass){
+    o.status="closed"; o.reviewNote=note.trim(); o.reviewAt=now; o.reviewer=reviewer;
+    o.history.push({ at:now, type:"pass", by:reviewer, text:"复核通过，整改闭环"+(note.trim()?"："+note.trim():"") });
+  }else{
+    if(!note.trim()) throw new Error("退回必须填写复核意见");
+    o.status="rejected"; o.reviewNote=note.trim(); o.reviewAt=now; o.reviewer=reviewer;
+    o.deadline = now + slaMs(o.level);
+    o.history.push({ at:now, type:"reject", by:reviewer,
+      text:"复核不通过，退回责任人重做，期限重新起算至 "+fmtDateTime(o.deadline)+"；意见："+note.trim() });
+  }
+  save();
+}
+
+// 管理员调整等级：同步重算期限与区域限制
+function changeLevel(orderId, level, by){
+  const o = db.orders.find(x=>x.id===orderId);
+  if(!o) throw new Error("整改单不存在");
+  if(o.status==="closed") throw new Error("已闭环的整改单不可调整等级");
+  if(o.level===level) return;
+  const now = Date.now();
+  const old = lvl(o.level).name;
+  o.level = level;
+  // 无论待整改还是待复核，期限一律按新等级从当前时刻重算，区域限制由等级自动联动
+  o.deadline = now + slaMs(level);
+  o.history.push({ at:now, type:"level", by,
+    text:"等级由「"+old+"」调整为「"+lvl(level).name+"」，期限同步重算至 "+fmtDateTime(o.deadline)
+      +(level===3?"；该区域即刻进入受限状态":(old&&level<3?"；若区域内无其他严重未闭环单，区域限制解除":"")) });
+  save();
+}
+
+/* ================= 基础数据维护 ================= */
+function saveArea(id, data){
+  if(id){ const a=db.areas.find(x=>x.id===id); Object.assign(a,data); }
+  else db.areas.push({ id:uid("a"), name:"", desc:"", ...data });
+  save();
+}
+function removeArea(id){
+  if(db.orders.some(o=>o.areaId===id)) throw new Error("该区域已有整改单记录，不可删除（可保留并停止新增检查项）");
+  db.areas = db.areas.filter(a=>a.id!==id);
+  db.items = db.items.filter(i=>i.areaId!==id);
+  save();
+}
+function saveItem(id, data){
+  if(id){ const it=db.items.find(x=>x.id===id); Object.assign(it,data); }
+  else db.items.push({ id:uid("i"), active:true, ...data });
+  save();
+}
+function toggleItem(id){ const it=db.items.find(x=>x.id===id); it.active=!it.active; save(); }
+function removeItem(id){
+  if(db.orders.some(o=>o.itemId===id)) throw new Error("该检查项已开单，不可删除；停用即可，停用不影响已开整改单");
+  db.items = db.items.filter(i=>i.id!==id); save();
+}
+function savePerson(id, data){
+  if(id){ const p=db.persons.find(x=>x.id===id); Object.assign(p,data); }
+  else db.persons.push({ id:uid("p"), ...data });
+  save();
+}
+function removePerson(id){
+  if(db.orders.some(o=>o.assignee===id)) throw new Error("该责任人名下已有整改单，不可删除");
+  db.persons = db.persons.filter(p=>p.id!==id); save();
+}
+function saveSla(hours, by){
+  [1,2,3].forEach(k=>{ db.config.slaHours[k] = Number(hours[k]); });
+  save();
+}
+
+/* ================= 格式化 ================= */
+function fmtDateTime(ts){
+  if(!ts) return "—";
+  const d=new Date(ts), p=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+}
+function remainText(o){
+  if(o.status==="closed") return "已闭环";
+  if(o.status==="done") return "已提交，待复核";
+  const ms = o.deadline - Date.now();
+  const abs = Math.abs(ms);
+  const h = Math.floor(abs/3600000), m = Math.floor(abs%3600000/60000), s = Math.floor(abs%60000/1000);
+  let txt;
+  if(h>0) txt = h+"小时"+m+"分";
+  else if(m>0) txt = m+"分"+s+"秒";
+  else txt = s+"秒";
+  return ms>=0 ? "剩余 "+txt : "已逾期 "+txt;
+}
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function levelTag(k){ const l=lvl(k); return '<span class="tag '+l.cls+'">'+l.name+'</span>'; }
+function statusTag(o){
+  const overdue = isOverdue(o);
+  if(overdue) return '<span class="tag st-overdue">逾期·'+STATUS[o.status].name+'</span>';
+  return '<span class="tag '+STATUS[o.status].cls+'">'+STATUS[o.status].name+'</span>';
+}
+
+/* ================= UI 状态 ================= */
+const TABS = {
+  admin:[
+    {key:"master",  name:"区域 / 检查项 / 责任人"},
+    {key:"sla",     name:"等级期限与规则"},
+    {key:"orders",  name:"整改单总表"}
+  ],
+  inspector:[
+    {key:"inspect", name:"现场巡检"},
+    {key:"review",  name:"复核待办"},
+    {key:"records", name:"巡检记录"},
+    {key:"orders",  name:"整改单总表"}
+  ],
+  person:[
+    {key:"todo",    name:"我的整改任务"},
+    {key:"orders",  name:"整改单总表"}
+  ]
+};
+function role(){ return db.ui.role; }
+function tab(){ return db.ui.tab[role()]; }
+function setRole(r){ db.ui.role=r; save(); render(); }
+function setTab(t){ db.ui.tab[role()]=t; save(); render(); }
+
+/* ================= 弹窗 / 提示 ================= */
+function toast(msg){
+  const el=document.getElementById("toast");
+  el.textContent=msg; el.classList.add("show");
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"), 2200);
+}
+function modal(html){
+  document.getElementById("modalBox").innerHTML = html;
+  document.getElementById("modalMask").style.display="flex";
+}
+let modalOrderId = null;
+function closeModal(){ document.getElementById("modalMask").style.display="none"; document.getElementById("modalBox").innerHTML=""; modalOrderId=null; }
+document.getElementById("modalMask").addEventListener("click", e=>{ if(e.target.id==="modalMask") closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+
+/* ================= 渲染：头部 ================= */
+function renderHeader(){
+  document.querySelectorAll("#roleSeg button").forEach(b=>b.classList.toggle("active", b.dataset.role===role()));
+  const extra=document.getElementById("roleExtra");
+  if(role()==="inspector"){
+    extra.innerHTML='<span style="font-size:12px">巡检员</span><input type="text" id="inspectorName" value="'+esc(db.ui.inspectorName||"")+'" placeholder="填写巡检员姓名">';
+    document.getElementById("inspectorName").addEventListener("input", e=>{ db.ui.inspectorName=e.target.value; save(); });
+  }else if(role()==="person"){
+    extra.innerHTML='<span style="font-size:12px">当前责任人</span><select id="personPick">'+
+      db.persons.map(p=>'<option value="'+p.id+'"'+(p.id===db.ui.personId?" selected":"")+'>'+esc(p.name)+'（'+esc(p.role)+'）</option>').join("")+'</select>';
+    document.getElementById("personPick").addEventListener("change", e=>{ db.ui.personId=e.target.value; save(); render(); });
+  }else extra.innerHTML="";
+}
+
+function renderKpis(){
+  const open = db.orders.filter(o=>o.status!=="closed");
+  const overdue = open.filter(isOverdue);
+  const high = open.filter(o=>o.level===3);
+  const done = db.orders.filter(o=>o.status==="done");
+  const rejected = open.filter(o=>o.status==="rejected");
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayCount = db.inspections.filter(r=>r.at>=today.getTime()).length;
+  const cards=[
+    {n:db.inspections.length, l:"累计巡检记录"},
+    {n:open.length, l:"未闭环整改单", cls:open.length?"warn":""},
+    {n:overdue.length, l:"逾期待处理", cls:overdue.length?"danger":""},
+    {n:high.length, l:"严重隐患未闭环", cls:high.length?"danger":""},
+    {n:done.length, l:"待复核"},
+    {n:todayCount, l:"今日巡检次数"}
+  ];
+  document.getElementById("kpis").innerHTML=cards.map(c=>
+    '<div class="kpi '+c.cls+'"><div class="n">'+c.n+'</div><div class="l">'+c.l+'</div></div>').join("");
+}
+
+function renderBanner(){
+  const el=document.getElementById("restrictBanner");
+  const set=restrictedAreas();
+  if(!set.size){ el.style.display="none"; return; }
+  const names=[...set].map(id=>{
+    const cnt=openHighOrdersOfArea(id).length;
+    return "<b>"+esc(areaName(id))+"</b>（严重未闭环 "+cnt+" 单）";
+  }).join("、");
+  el.style.display="block";
+  el.innerHTML='⛔ 区域受限：'+names+'。该区域暂停新巡检开单，须等严重隐患整改并全部复核通过后自动恢复。'+
+    '<a id="bannerGo">查看严重整改单</a>';
+  document.getElementById("bannerGo").onclick=()=>{
+    const o=db.orders.find(x=>x.level===3 && x.status!=="closed");
+    if(o) openOrder(o.id);
+  };
+}
+
+/* ================= 渲染：标签与视图 ================= */
+function render(){
+  renderHeader(); renderKpis(); renderBanner();
+  document.getElementById("tabs").innerHTML=TABS[role()].map(t=>
+    '<button class="'+(t.key===tab()?"active":"")+'" data-tab="'+t.key+'">'+t.name+'</button>').join("");
+  document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+  const v=document.getElementById("view");
+  if(role()==="admin") v.innerHTML = tab()==="master" ? viewMaster() : tab()==="sla" ? viewSla() : viewOrders({admin:true});
+  if(role()==="inspector") v.innerHTML = tab()==="inspect" ? viewInspect() : tab()==="review" ? viewReview() : tab()==="records" ? viewRecords() : viewOrders({});
+  if(role()==="person") v.innerHTML = tab()==="todo" ? viewPerson() : viewOrders({person:true});
+  bindView(); bindSpecial();
+}
+function bindView(){
+  document.querySelectorAll("[data-act]").forEach(el=>{
+    el.onclick=()=>routeAction(el.dataset.act, el.dataset.id);
+  });
+}
+function routeAction(act,id){
+  try{
+    switch(act){
+      // 基础数据
+      case "area-add": return areaModal(null);
+      case "area-edit": return areaModal(id);
+      case "area-del": return confirmAct("确认删除区域「"+areaName(id)+"」？该区域下检查项将一并移除。",()=>{removeArea(id);toast("区域已删除");render();});
+      case "item-add": return itemModal(null, id);   // id = areaId
+      case "item-edit": return itemModal(id, null);
+      case "item-toggle": { toggleItem(id); toast(itemRef(id).active?"检查项已启用":"检查项已停用（不影响已开整改单）"); return render(); }
+      case "item-del": return confirmAct("确认删除该检查项？",()=>{removeItem(id);toast("已删除");render();});
+      case "person-add": return personModal(null);
+      case "person-edit": return personModal(id);
+      case "person-del": return confirmAct("确认删除该责任人？",()=>{removePerson(id);toast("责任人已删除");render();});
+      // 巡检
+      case "item-ok": return inspectModal(id, true);
+      case "item-bad": return inspectModal(id, false);
+      case "locked-bad": return toast("该区域因严重隐患已受限：暂停新开整改单，请先完成严重隐患整改并复核通过；仍可记录合格");
+      // 整改单
+      case "order-open": return openOrder(id);
+      case "order-submit": return submitModal(id);
+      case "order-review": return reviewModal(id);
+      case "order-level": return levelModal(id);
+      case "sla-save": return openSlaModal();
+    }
+  }catch(e){ toast(e.message); }
+}
+function confirmAct(text, fn){
+  modal('<h3>请确认</h3><p>'+esc(text)+'</p><div class="actions">'+
+    '<button class="btn ghost" onclick="closeModal()">取消</button>'+
+    '<button class="btn" id="okBtn">确认</button></div>');
+  document.getElementById("okBtn").onclick=()=>{ closeModal(); try{fn();}catch(e){toast(e.message);} };
+}
+
+/* ================= 视图：管理员基础数据 ================= */
+function viewMaster(){
+  const restricted = restrictedAreas();
+  const areaCards = db.areas.map(a=>{
+    const its=db.items.filter(i=>i.areaId===a.id);
+    const lock=restricted.has(a.id);
+    return '<div class="area-card'+(lock?" restricted":"")+'">'+
+      '<h3>'+esc(a.name)+(lock?' <span class="tag l3">区域受限</span>':'')+
+        ' <span class="muted" style="font-size:12px;font-weight:400">'+esc(a.desc)+'</span></h3>'+
+      '<div class="muted" style="font-size:12px">检查项 '+its.length+' 项（启用 '+its.filter(i=>i.active).length+'）'+
+        '；未闭环单 '+db.orders.filter(o=>o.areaId===a.id&&o.status!=="closed").length+' 单</div>'+
+      its.map(i=>'<div class="item-row'+(i.active?"":" off")+'"><div class="txt">'+
+          '<b>'+esc(i.code)+'</b> '+esc(i.text)+'<br><small>'+(i.active?'':'已停用 · ')+
+          '未闭环 ' + openOrdersByItem(i.id).length + ' 单</small></div>'+
+          '<button class="btn ghost sm" data-act="item-edit" data-id="'+i.id+'">编辑</button>'+
+          '<button class="btn gray sm" data-act="item-toggle" data-id="'+i.id+'">'+(i.active?"停用":"启用")+'</button>'+
+          '<button class="btn gray sm" data-act="item-del" data-id="'+i.id+'">删除</button></div>').join("")+
+      '<div style="margin-top:10px"><button class="btn teal sm" data-act="item-add" data-id="'+a.id+'">＋ 新增检查项</button> '+
+      '<button class="btn ghost sm" data-act="area-edit" data-id="'+a.id+'">编辑区域</button> '+
+      '<button class="btn gray sm" data-act="area-del" data-id="'+a.id+'">删除区域</button></div></div>';
+  }).join("");
+  const personRows = db.persons.map(p=>{
+    const cnt=db.orders.filter(o=>o.assignee===p.id&&o.status!=="closed").length;
+    return '<tr><td><b>'+esc(p.name)+'</b></td><td>'+esc(p.role)+'</td><td>'+esc(p.phone||"—")+
+      '</td><td class="'+(cnt?"danger":"muted")+'">未闭环 '+cnt+' 单</td><td>'+
+      '<button class="btn ghost sm" data-act="person-edit" data-id="'+p.id+'">编辑</button> '+
+      '<button class="btn gray sm" data-act="person-del" data-id="'+p.id+'">删除</button></td></tr>';
+  }).join("");
+  return '<div class="grid2"><div><div class="panel"><h2>区域与检查项</h2>'+
+      '<p class="hint">检查项停用后，巡检列表不再出现，但已开出的整改单照常流转。区域存在严重未闭环单时自动受限。</p>'+
+      '<div class="cards">'+areaCards+'</div>'+
+      '<div style="margin-top:12px"><button class="btn" data-act="area-add">＋ 新增区域</button></div></div></div>'+
+    '<div><div class="panel"><h2>责任人</h2><p class="hint">维护整改责任人；名下已有整改单的责任人不可删除。</p>'+
+      '<table><thead><tr><th>姓名</th><th>岗位</th><th>联系方式</th><th>在办</th><th>操作</th></tr></thead><tbody>'+
+      (personRows||'<tr><td colspan="5" class="empty">暂无责任人</td></tr>')+
+      '</tbody></table><div style="margin-top:12px"><button class="btn" data-act="person-add">＋ 新增责任人</button></div></div></div></div>';
+}
+
+function areaModal(id){
+  const a = id ? db.areas.find(x=>x.id===id) : { name:"", desc:"" };
+  modal('<h3>'+(id?"编辑区域":"新增区域")+'</h3>'+
+    '<label>区域名称</label><input type="text" id="f-name" value="'+esc(a.name)+'" placeholder="如：织造车间">'+
+    '<label>区域说明</label><input type="text" id="f-desc" value="'+esc(a.desc)+'" placeholder="作业内容/位置">'+
+    '<div class="actions"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" id="saveBtn">保存</button></div>');
+  document.getElementById("saveBtn").onclick=()=>{
+    const name=document.getElementById("f-name").value.trim();
+    if(!name) return toast("请填写区域名称");
+    saveArea(id,{ name, desc:document.getElementById("f-desc").value.trim() });
+    closeModal(); toast("已保存"); render();
+  };
+}
+function itemModal(id, areaId){
+  const it = id ? db.items.find(x=>x.id===id) : { areaId, code:"", text:"", active:true };
+  modal('<h3>'+(id?"编辑检查项":"新增检查项")+'</h3>'+
+    '<div class="inline"><div><label>所属区域</label><select id="f-area">'+
+      db.areas.map(a=>'<option value="'+a.id+'"'+(a.id===it.areaId?" selected":"")+'>'+esc(a.name)+'</option>').join("")+'</select></div>'+
+    '<div><label>编号</label><input type="text" id="f-code" value="'+esc(it.code||"")+'" placeholder="如 ZZ-05"></div></div>'+
+    '<label>检查内容</label><input type="text" id="f-text" value="'+esc(it.text)+'" placeholder="如 消防通道畅通、灭火器在有效期内">'+
+    '<div class="actions"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" id="saveBtn">保存</button></div>');
+  document.getElementById("saveBtn").onclick=()=>{
+    const text=document.getElementById("f-text").value.trim();
+    if(!text) return toast("请填写检查内容");
+    saveItem(id,{ areaId:document.getElementById("f-area").value, code:document.getElementById("f-code").value.trim(), text, active:it.active });
+    closeModal(); toast("已保存"); render();
+  };
+}
+function personModal(id){
+  const p = id ? db.persons.find(x=>x.id===id) : { name:"", role:"", phone:"" };
+  modal('<h3>'+(id?"编辑责任人":"新增责任人")+'</h3>'+
+    '<div class="inline"><div><label>姓名</label><input type="text" id="f-name" value="'+esc(p.name)+'"></div>'+
+    '<div><label>岗位</label><input type="text" id="f-role" value="'+esc(p.role)+'" placeholder="如 车间主任"></div></div>'+
+    '<label>联系方式</label><input type="text" id="f-phone" value="'+esc(p.phone||"")+'" placeholder="内线/电话">'+
+    '<div class="actions"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" id="saveBtn">保存</button></div>');
+  document.getElementById("saveBtn").onclick=()=>{
+    const name=document.getElementById("f-name").value.trim();
+    if(!name) return toast("请填写姓名");
+    savePerson(id,{ name, role:document.getElementById("f-role").value.trim(), phone:document.getElementById("f-phone").value.trim() });
+    closeModal(); toast("已保存"); render();
+  };
+}
+
+/* ================= 视图：等级期限配置 ================= */
+function viewSla(){
+  const s=db.config.slaHours;
+  const rows=LEVELS.map(l=>
+    '<div class="sla-row">'+levelTag(l.key)+
+      ' 开单/重做期限 <input type="number" min="0" step="0.1" id="sla-'+l.key+'" value="'+s[l.key]+'"> 小时'+
+      '（'+s[l.key]+' 小时 ≈ '+fmtDur(s[l.key]*3600000)+'）</div>').join("");
+  return '<div class="panel" style="max-width:760px"><h2>等级期限与升级规则</h2>'+
+    '<p class="hint">整改单按等级确定整改期限；逾期未闭环自动升高一级并按新等级重新起算期限，直至「严重隐患」。调整等级也会同步重算期限并联动区域限制。</p>'+
+    rows+
+    '<div class="legend"><b>规则说明</b><br>'+
+    '<span class="tag l1">一般隐患</span><span class="tag l2">较重隐患</span><span class="tag l3">严重隐患</span> 等级依次升高<br>'+
+    '· 逾期升级链：一般 → 较重 → 严重，每次逾期只升一级<br>'+
+    '· 复核不通过退回重做，期限从退回时刻重新起算<br>'+
+    '· 严重隐患未闭环期间，所在<span class="danger">区域受限</span>（暂停新巡检开单）；全部复核通过后自动恢复<br>'+
+    '· 同一检查项存在未闭环整改单时，不能重复开单<br>'+
+    '· 检查项停用不影响已开整改单的流转</div>'+
+    '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn" id="slaSave">保存期限设置</button>'+
+    '<button class="btn ghost" id="slaDemo">演示用短周期（3 / 2 / 1 分钟）</button>'+
+    '<button class="btn gray" id="slaReset">恢复默认（24 / 8 / 2 小时）</button></div></div>';
+}
+function fmtDur(ms){ const m=Math.round(ms/60000); if(m<60) return m+" 分钟"; return Math.floor(m/60)+" 小时"+(m%60?m%60+" 分":""); }
+function openSlaModal(){
+  const get=k=>parseFloat(document.getElementById("sla-"+k).value);
+  if([1,2,3].some(k=>!(get(k)>=0))) return toast("请填写有效的期限小时数");
+  saveSla({1:get(1),2:get(2),3:get(3)}); toast("期限设置已保存（仅影响新产生/新重算的期限）"); render();
+}
+
+/* ================= 视图：巡检 ================= */
+function viewInspect(){
+  const restricted=restrictedAreas();
+  if(!db.areas.length) return '<div class="panel empty">尚无区域，请先由管理员维护基础数据。</div>';
+  const cards=db.areas.map(a=>{
+    const its=db.items.filter(i=>i.areaId===a.id&&i.active);
+    const lock=restricted.has(a.id);
+    const high=openHighOrdersOfArea(a);
+    return '<div class="area-card'+(lock?" restricted":"")+'">'+
+      '<h3>'+esc(a.name)+(lock?' <span class="tag l3">区域受限</span>':'')+'</h3>'+
+      '<div class="muted" style="font-size:12px;margin-bottom:6px">'+esc(a.desc)+'</div>'+
+      (lock?'<div class="lock-note">⛔ 严重隐患未闭环，本区域暂停新巡检开单：'+
+        high.map(o=>'<span class="orderlink" data-act="order-open" data-id="'+o.id+'">'+o.code+'</span>').join(" ")+'，全部复核通过后恢复</div>':"")+
+      (its.length?its.map(i=>inspectRow(i,lock)).join(""):'<div class="muted" style="margin-top:8px">暂无启用的检查项</div>')+
+      '</div>';
+  }).join("");
+  return '<div class="panel"><h2>现场逐项巡检</h2>'+
+    '<p class="hint">逐项判定「合格」或「问题」。判定问题时选择隐患等级与责任人，系统按等级自动开单并写明期限；同一检查项未闭环时不能重复开单。当前巡检员：<b>'+esc(db.ui.inspectorName||"（未署名）")+'</b></p>'+
+    '<div class="cards">'+cards+'</div>';
+}
+function inspectRow(i, areaLocked){
+  const opens=openOrdersByItem(i.id);
+  const busy=opens.length>0;
+  const last=db.inspections.find(r=>r.itemId===i.id);
+  return '<div class="item-row'+(busy?"":"")+'"><div class="txt"><b>'+esc(i.code)+'</b> '+esc(i.text)+'<br>'+
+    '<small>'+(last?(last.ok?'上次：合格':'上次：问题 '+(last.orderId?'（已开单）':""))+' · '+fmtDateTime(last.at):'尚无巡检记录')+
+    (busy?' · <span class="danger">整改中，禁止重复开单</span>':'')+'</small></div>'+
+    (busy?('<button class="btn ghost sm" data-act="order-open" data-id="'+opens[0].id+'">查看整改单</button>')
+      : ('<button class="btn teal sm" data-act="item-ok" data-id="'+i.id+'">✓ 合格</button> '+
+         (areaLocked
+           ? '<button class="btn sm" data-act="locked-bad" data-id="'+i.id+'" title="区域受限期间禁止新开单">✗ 问题</button>'
+           : '<button class="btn sm" data-act="item-bad" data-id="'+i.id+'">✗ 问题</button>')))+
+    '</div>';
+}
+function inspectModal(itemId, ok){
+  const it=itemRef(itemId);
+  if(ok){
+    modal('<h3>巡检合格记录</h3><p>检查项：<b>'+esc(itemLabel(it))+'</b><br><span class="muted">'+esc(areaName(it.areaId))+'</span></p>'+
+      '<label>备注（可选）</label><input type="text" id="f-note" placeholder="现场情况说明">'+
+      '<div class="actions"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn teal" id="okBtn">记录合格</button></div>');
+    document.getElementById("okBtn").onclick=()=>{
+      recordInspection({itemId,ok:true,note:document.getElementById("f-note").value,inspectorName:db.ui.inspectorName});
+      closeModal(); toast("已记录：合格"); render();
+    };
+  }else{
+    if(!db.persons.length){ closeModal(); return toast("尚无责任人，请先由管理员维护"); }
+    const s=db.config.slaHours;
+    modal('<h3>登记隐患问题并开单</h3><p>检查项：<b>'+esc(itemLabel(it))+'</b><br><span class="muted">'+esc(areaName(it.areaId))+'</span></p>'+
+      '<label>隐患等级（决定整改期限与是否区域受限）</label>'+
+      '<select id="f-level">'+LEVELS.map(l=>'<option value="'+l.key+'">'+l.name+'（限期 '+s[l.key]+' 小时'+(l.key===3?'；区域将受限':"")+'）</option>').join("")+'</select>'+
+      '<label>整改责任人</label><select id="f-assignee">'+
+        db.persons.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'（'+esc(p.role)+'）</option>').join("")+'</select>'+
+      '<label>问题描述</label><textarea id="f-note" placeholder="描述发现的问题、位置、风险等"></textarea>'+
+      '<div class="actions"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" id="okBtn">生成整改单</button></div>');
+    document.getElementById("okBtn").onclick=()=>{
+      try{
+        const o=recordInspection({itemId,ok:false,level:Number(document.getElementById("f-level").value),
+          assignee:document.getElementById("f-assignee").value,
+          note:document.getElementById("f-note").value,inspectorName:db.ui.inspectorName});
+        closeModal();
+        toast("已开单 "+o.code+"，限期 "+fmtDateTime(o.deadline)+(o.level===3?"，区域进入受限":""));
+        render();
+      }catch(e){ toast(e.message); }
+    };
+  }
+}
+
+/* ================= 整改单总表（三角色共用） ================= */
+function orderRows(list, opts){
+  return list.map(o=>{
+    const actions=orderActions(o,opts);
+    return '<tr>'+
+      '<td><span class="orderlink" data-act="order-open" data-id="'+o.id+'">'+o.code+'</span><br>'+
+        '<small class="muted">'+fmtDateTime(o.createAt)+'</small></td>'+
+      '<td>'+esc(areaName(o.areaId))+'<br><small class="muted">'+esc(itemLabel(itemRef(o.itemId)))+'</small></td>'+
+      '<td>'+levelTag(o.level)+'</td>'+
+      '<td>'+statusTag(o)+'</td>'+
+      '<td>'+esc(personName(o.assignee))+'</td>'+
+      '<td class="due '+(isOverdue(o)?"over":(((o.deadline-Date.now())<3600000&&o.status!=="closed")?"soon":""))+'" data-deadline="'+o.id+'">'+
+        '<div>'+fmtDateTime(o.deadline)+'</div><small>'+remainText(o)+'</small></td>'+
+      '<td>'+actions+'</td></tr>';
+  }).join("");
+}
+function orderActions(o,opts){
+  const btns=['<button class="btn ghost sm" data-act="order-open" data-id="'+o.id+'">详情</button>'];
+  if(opts.person && o.assignee===db.ui.personId && (o.status==="open"||o.status==="rejected"))
+    btns.push('<button class="btn sm" data-act="order-submit" data-id="'+o.id+'">提交整改</button>');
+  if(!opts.person && o.status==="done")
+    btns.push('<button class="btn teal sm" data-act="order-review" data-id="'+o.id+'">复核</button>');
+  if(opts.admin && o.status!=="closed")
+    btns.push('<button class="btn gray sm" data-act="order-level" data-id="'+o.id+'">调整等级</button>');
+  return btns.join(" ");
+}
+function viewOrders(opts){
+  const all=opts.person ? db.orders.filter(o=>o.assignee===db.ui.personId) : db.orders.slice();
+  const fkey = opts.person ? "personOrderFilter" : (opts.admin ? "adminOrderFilter" : "inspOrderFilter");
+  const filter = window[fkey] || (opts.person?"open":"all");
+  const list = filter==="all" ? all : filter==="open" ? all.filter(o=>o.status!=="closed") : all.filter(o=>o.status===filter);
+  const fBtn=(k,name)=>'<button class="btn '+(filter===k?"":"ghost")+' sm" data-filter="'+k+'">'+name+'</button>';
+  return '<div class="panel"><h2>'+(opts.admin?"整改单总表（管理员）":opts.person?"与我相关的整改单":"整改单总表")+'</h2>'+
+    '<p class="hint">共 '+all.length+' 单；未闭环 '+all.filter(o=>o.status!=="closed").length+' 单；逾期 '+all.filter(isOverdue).length+' 单。点击单号查看完整流转记录。</p>'+
+    '<div class="toolbar">'+fBtn("all","全部")+fBtn("open","未闭环")+fBtn("done","待复核")+fBtn("rejected","退回重做")+fBtn("closed","已闭环")+'</div>'+
+    (list.length?'<div style="overflow:auto"><table><thead><tr><th>单号</th><th>区域 / 检查项</th><th>等级</th><th>状态</th><th>责任人</th><th>期限</th><th>操作</th></tr></thead><tbody>'+
+      orderRows(list,opts)+'</tbody></table></div>':'<div class="empty">没有符合条件的整改单</div>');
+}
+
+/* ================= 复核待办 / 巡检记录 / 责任人视图 ================= */
+function viewReview(){
+  const list=db.orders.filter(o=>o.status==="done");
+  if(!list.length) return '<div class="panel empty">暂无待复核整改单。责任人提交整改后会出现在这里。</div>';
+  return '<div class="panel"><h2>复核待办（'+list.length+'）</h2><p class="hint">复核通过即闭环；复核不通过将退回责任人重做，并按当前等级从退回时刻重新起算期限。</p>'+
+    '<table><thead><tr><th>单号</th><th>区域 / 检查项</th><th>等级</th><th>责任人</th><th>整改说明</th><th>操作</th></tr></thead><tbody>'+
+    list.map(o=>'<tr><td><span class="orderlink" data-act="order-open" data-id="'+o.id+'">'+o.code+'</span></td>'+
+      '<td>'+esc(areaName(o.areaId))+'<br><small class="muted">'+esc(itemLabel(itemRef(o.itemId)))+'</small></td>'+
+      '<td>'+levelTag(o.level)+'</td><td>'+esc(personName(o.assignee))+'</td>'+
+      '<td style="max-width:260px">'+esc(o.rectifyNote)+'<br><small class="muted">'+fmtDateTime(o.rectifyAt)+'</small></td>'+
+      '<td><button class="btn teal sm" data-act="order-review" data-id="'+o.id+'">复核</button></td></tr>').join("")+
+    '</tbody></table></div>';
+}
+function viewRecords(){
+  if(!db.inspections.length) return '<div class="panel empty">暂无巡检记录。</div>';
+  return '<div class="panel"><h2>巡检记录（'+db.inspections.length+'）</h2><p class="hint">每一次合格/问题判定均留痕；问题记录关联对应整改单。</p>'+
+    '<table><thead><tr><th>时间</th><th>区域 / 检查项</th><th>结果</th><th>巡检员</th><th>说明</th></tr></thead><tbody>'+
+    db.inspections.map(r=>{
+      const it=itemRef(r.itemId);
+      return '<tr><td>'+fmtDateTime(r.at)+'</td>'+
+        '<td>'+esc(areaName(r.areaId))+'<br><small class="muted">'+esc(itemLabel(it))+'</small></td>'+
+        '<td>'+(r.ok?'<span class="tag st-closed">合格</span>':(levelTag(r.level)+(r.orderId?'<br><span class="orderlink" data-act="order-open" data-id="'+r.orderId+'">查看整改单</span>':"")))+'</td>'+
+        '<td>'+esc(r.by)+'</td><td style="max-width:300px">'+esc(r.note||"—")+'</td></tr>';
+    }).join("")+'</tbody></table></div>';
+}
+function viewPerson(){
+  const pid=db.ui.personId;
+  const mine=db.orders.filter(o=>o.assignee===pid);
+  const todo=mine.filter(o=>o.status==="open"||o.status==="rejected");
+  const review=mine.filter(o=>o.status==="done");
+  const closed=mine.filter(o=>o.status==="closed");
+  const card=o=>'<div class="area-card"><h3>'+levelTag(o.level)+' '+o.code+' '+statusTag(o)+'</h3>'+
+    '<div class="muted" style="font-size:12px">'+esc(areaName(o.areaId))+' · '+esc(itemLabel(itemRef(o.itemId)))+'</div>'+
+    (o.problemNote?'<div class="rect-box">问题：'+esc(o.problemNote)+'</div>':'')+
+    (o.status==="rejected"?'<div class="review-box">上次复核未通过：'+esc(o.reviewNote)+'</div>':'')+
+    '<div><b>期限：</b><span class="due '+(isOverdue(o)?"over":"")+'" data-deadline="'+o.id+'">'+fmtDateTime(o.deadline)+'（'+remainText(o)+'）</span></div>'+
+    '<div class="muted" style="font-size:12px;margin:4px 0">已提交整改 '+o.rectifyTimes+' 次</div>'+
+    '<div style="margin-top:8px"><button class="btn ghost sm" data-act="order-open" data-id="'+o.id+'">流转详情</button> '+
+    ((o.status==="open"||o.status==="rejected")?'<button class="btn sm" data-act="order-submit" data-id="'+o.id+'">填写整改说明并提交</button>':"")+'</div></div>';
+  return '<div class="panel"><h2>我的整改任务</h2>'+
+    '<p class="hint">待办 '+todo.length+' · 待复核 '+review.length+' · 已闭环 '+closed.length+'。逾期未提交将自动升级并缩短期限。</p>'+
+    (todo.length?'<h3 style="margin:14px 0 8px">待整改 / 被退回</h3><div class="cards">'+todo.map(card).join("")+"</div>":"<div class='empty'>当前没有待办整改任务 🎉</div>")+
+    (review.length?'<h3 style="margin:18px 0 8px">待巡检员复核</h3><div class="cards">'+review.map(card).join("")+"</div>":"")+
+    (closed.length?'<h3 style="margin:18px 0 8px">已闭环</h3><div class="cards">'+closed.map(card).join("")+"</div>":"")+
+    '</div>';
+}
+
+/* ================= 整改单详情 / 操作弹窗 ================= */
+function openOrder(id){
+  const o=db.orders.find(x=>x.id===id); if(!o) return;
+  modalOrderId=id;
+  const tl=o.history.slice().reverse().map(e=>
+    '<div class="ev"><div class="t">'+fmtDateTime(e.at)+' · '+esc(e.by)+'</div><div><b>'+histType(e.type)+'</b> '+esc(e.text.replace(/^[^，；:]*[：:]/,""))+'</div></div>').join("");
+  const canSubmit=(role()==="person"&&o.assignee===db.ui.personId&&(o.status==="open"||o.status==="rejected"));
+  const canReview=(role()==="inspector"&&o.status==="done");
+  const canLevel=(role()==="admin"&&o.status!=="closed");
+  modal('<h3>整改单 '+o.code+' <span style="margin-left:6px">'+levelTag(o.level)+' '+statusTag(o)+'</span></h3>'+
+    '<div class="kv">'+
+      '<div>区域</div><div>'+esc(areaName(o.areaId))+'</div>'+
+      '<div>检查项</div><div>'+esc(itemLabel(itemRef(o.itemId)))+'</div>'+
+      '<div>责任人</div><div>'+esc(personName(o.assignee))+'</div>'+
+      '<div>开单时间</div><div>'+fmtDateTime(o.createAt)+'（'+esc(o.openedBy)+' 开单）</div>'+
+      '<div>整改期限</div><div><span class="due '+(isOverdue(o)?"over":"")+'" data-deadline="'+o.id+'">'+fmtDateTime(o.deadline)+'（'+remainText(o)+'）</span></div>'+
+      '<div>问题描述</div><div>'+esc(o.problemNote||"—")+'</div>'+
+      '<div>整改说明</div><div>'+(o.rectifyNote?esc(o.rectifyNote)+' <small class="muted">（'+fmtDateTime(o.rectifyAt)+'，第 '+o.rectifyTimes+' 次提交）</small>':"尚未提交")+'</div>'+
+      '<div>复核意见</div><div>'+(o.reviewNote?esc(o.reviewNote)+' <small class="muted">（'+esc(o.reviewer)+' · '+fmtDateTime(o.reviewAt)+'）</small>':"—")+'</div>'+
+    '</div>'+
+    '<h3 style="margin-top:16px;font-size:14px">流转记录</h3><div class="timeline">'+tl+'</div>'+
+    '<div class="actions">'+
+      (canSubmit?'<button class="btn" id="mSubmit">填写整改说明并提交</button>':"")+
+      (canReview?'<button class="btn teal" id="mReview">去复核</button>':"")+
+      (canLevel?'<button class="btn gray" id="mLevel">调整等级</button>':"")+
+      '<button class="btn ghost" onclick="closeModal()">关闭</button></div>');
+  if(canSubmit) document.getElementById("mSubmit").onclick=()=>{ closeModal(); submitModal(id); };
+  if(canReview) document.getElementById("mReview").onclick=()=>{ closeModal(); reviewModal(id); };
+  if(canLevel) document.getElementById("mLevel").onclick=()=>{ closeModal(); levelModal(id); };
+}
+function histType(t){ return {create:"开单",submit:"整改提交",review:"",pass:"复核通过",reject:"复核退回",escalate:"逾期升级",level:"等级调整"}[t]||"记录"; }
+
+function submitModal(id){
+  const o=db.orders.find(x=>x.id===id);
+  modal('<h3>整改提交 · '+o.code+'</h3>'+
+    '<p>'+levelTag(o.level)+' '+(o.status==="rejected"?'<span class="tag st-rejected">上次复核未通过</span>':'')+' 当前期限：'+fmtDateTime(o.deadline)+'</p>'+
+    (o.status==="rejected"?'<div class="review-box">退回意见：'+esc(o.reviewNote)+'</div>':'')+
+    '<label>整改说明（必填）</label><textarea id="f-note" placeholder="说明整改措施、完成情况、现场照片编号等">'+esc(o.rectifyNote||"")+'</textarea>'+
+    '<div class="actions"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" id="okBtn">提交复核</button></div>');
+  document.getElementById("okBtn").onclick=()=>{
+    try{
+      const by = role()==="person" ? personName(db.ui.personId) : personName(o.assignee);
+      submitRectify(id,document.getElementById("f-note").value,by);
+      closeModal(); toast("已提交，等待巡检员复核"); render();
+    }catch(e){ toast(e.message); }
+  };
+}
+function reviewModal(id){
+  const o=db.orders.find(x=>x.id===id);
+  modal('<h3>复核 · '+o.code+'</h3>'+
+    '<div class="kv"><div>问题</div><div>'+esc(o.problemNote||"—")+'</div>'+
+    '<div>整改说明</div><div>'+esc(o.rectifyNote)+'</div>'+
+    '<div>提交时间</div><div>'+fmtDateTime(o.rectifyAt)+' · 第 '+o.rectifyTimes+' 次提交</div></div>'+
+    '<label>复核意见（退回时必填）</label><textarea id="f-note" placeholder="通过可留空；不通过须写明退回原因"></textarea>'+
+    '<div class="actions"><button class="btn ghost" onclick="closeModal()">取消</button>'+
+    '<button class="btn" id="failBtn" style="background:var(--l3)">复核不通过，退回重做</button>'+
+    '<button class="btn teal" id="passBtn">复核通过，闭环</button></div>');
+  document.getElementById("passBtn").onclick=()=>{
+    try{
+      reviewOrder(id,true,document.getElementById("f-note").value,db.ui.inspectorName||"巡检员");
+      closeModal();
+      const still=openHighOrdersOfArea(o.areaId).length;
+      toast(still? "复核通过，已闭环（区域仍有其他严重未闭环单）":"复核通过，已闭环；区域限制解除恢复正常");
+      render();
+    }catch(e){ toast(e.message); }
+  };
+  document.getElementById("failBtn").onclick=()=>{
+    try{
+      reviewOrder(id,false,document.getElementById("f-note").value,db.ui.inspectorName||"巡检员");
+      closeModal(); toast("已退回重做，整改期限重新起算至 "+fmtDateTime(o.deadline)); render();
+    }catch(e){ toast(e.message); }
+  };
+}
+function levelModal(id){
+  const o=db.orders.find(x=>x.id===id);
+  const s=db.config.slaHours;
+  modal('<h3>调整等级 · '+o.code+'</h3>'+
+    '<p class="hint">调整后立即按新等级重算整改期限；设为严重时区域即刻受限，降回后若无其他严重未闭环单则解除限制。</p>'+
+    '<label>隐患等级</label><select id="f-level">'+
+      LEVELS.map(l=>'<option value="'+l.key+'"'+(l.key===o.level?" selected":"")+'>'+l.name+'（限期 '+s[l.key]+' 小时'+(l.key===3?'；区域受限':"")+'）</option>').join("")+'</select>'+
+    '<div class="actions"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" id="okBtn">确认调整并重算期限</button></div>');
+  document.getElementById("okBtn").onclick=()=>{
+    try{
+      const lv=Number(document.getElementById("f-level").value);
+      changeLevel(id,lv,"管理员");
+      closeModal(); toast("等级已调整，期限重算至 "+fmtDateTime(o.deadline)+(lv===3?"，区域进入受限":"")); render();
+    }catch(e){ toast(e.message); }
+  };
+}
+
+/* ================= 流程说明 ================= */
+function openHelp(){
+  modal('<h3>业务流程与规则说明</h3>'+
+    '<div class="rect-box">① <b>管理员</b>：维护区域、检查项（可停用/启用，停用不影响已开整改单）、责任人；配置三个等级的整改期限；可在整改单总表调整等级。<br>'+
+    '② <b>巡检员</b>：按区域逐项巡检，记录「合格」或「问题」。问题选择等级（一般 / 较重 / 严重）与责任人后自动生成整改单并写明期限。<br>'+
+    '③ <b>责任人</b>：在「我的整改任务」填写整改说明并提交，状态变为待复核。<br>'+
+    '④ <b>巡检员复核</b>：通过 → 闭环；不通过 → 退回责任人重做，期限从退回时刻重新起算。</div>'+
+    '<div class="review-box">关键规则：<br>'+
+    '· 同一检查项存在未闭环整改单时，<b>不能重复开单</b>，只能查看跟办。<br>'+
+    '· 待整改/被退回的单子<b>逾期自动升级</b>一级，按新等级重新起算期限（一般→较重→严重），系统每 15 秒自动检查，刷新页面也会立即检查。<br>'+
+    '· 管理员调整等级时，<b>同步重算期限并联动区域限制</b>。<br>'+
+    '· <b>严重隐患未闭环 → 区域受限</b>，该区域暂停新巡检开单；待严重隐患整改并全部复核通过后，区域<b>自动恢复</b>。<br>'+
+    '· 所有数据保存在本机浏览器，刷新后保留。</div>'+
+    '<p class="hint">演示提示：管理员 →「等级期限与规则」可一键切换为 3/2/1 分钟短周期，快速观察逾期升级。</p>'+
+    '<div class="actions"><button class="btn" onclick="closeModal()">知道了</button></div>');
+}
+
+/* ================= 事件绑定 ================= */
+document.getElementById("roleSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-role]"); if(b) setRole(b.dataset.role);
+});
+document.getElementById("helpBtn").onclick=openHelp;
+document.addEventListener("click",e=>{
+  const f=e.target.closest("[data-filter]");
+  if(f){
+    const roleKey=role();
+    window[roleKey==="person"?"personOrderFilter":roleKey==="admin"?"adminOrderFilter":"inspOrderFilter"]=f.dataset.filter;
+    render();
+  }
+});
+// SLA 页按钮（视图内特殊按钮）
+function bindSpecial(){
+  const save=document.getElementById("slaSave");
+  if(save) save.onclick=openSlaModal;
+  const demo=document.getElementById("slaDemo");
+  if(demo) demo.onclick=()=>{
+    db.config.slaHours={1:3/60,2:2/60,3:1/60}; // 3分钟/2分钟/1分钟
+    save(); toast("已切换演示短周期（3/2/1 分钟）"); render();
+  };
+  const reset=document.getElementById("slaReset");
+  if(reset) reset.onclick=()=>{ db.config.slaHours={1:24,2:8,3:2}; save(); toast("已恢复默认 24/8/2 小时"); render(); };
+}
+
+/* ================= 定时：倒计时与逾期扫描 ================= */
+var lastOverdueIds = null;
+function tick(){
+  const changed=sweepOverdue();
+  const overdueIds = db.orders.filter(isOverdue).map(o=>o.id).join(",");
+  const overdueChanged = overdueIds !== lastOverdueIds;
+  lastOverdueIds = overdueIds;
+  if(changed || overdueChanged){
+    render();
+    if(modalOrderId && document.getElementById("modalMask").style.display==="flex") openOrder(modalOrderId);
+    return;
+  }
+  // 轻量刷新：只更新期限相关文案
+  document.querySelectorAll("[data-deadline]").forEach(span=>{
+    const o=db.orders.find(x=>x.id===span.dataset.deadline); if(!o) return;
+    span.classList.toggle("over",isOverdue(o));
+    const sm=span.querySelector("small");
+    if(sm) sm.textContent=remainText(o);
+  });
+  // KPI 与受限横幅实时更新（弹窗打开时不重绘，避免干扰表单输入）
+  if(document.getElementById("modalMask").style.display!=="flex"){
+    renderKpis(); renderBanner();
+  }
+}
+setInterval(tick, 1000);
+setInterval(()=>{ if(sweepOverdue()) render(); }, SWEEP_MS);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ if(sweepOverdue()) render(); else tick(); } });
+
+/* ================= 启动 ================= */
+load();
+if(!db.persons.some(p=>p.id===db.ui.personId)) db.ui.personId=(db.persons[0]||{}).id||"";
+sweepOverdue();
+render();
+</script>
 </body>
 </html>
